@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title> Image Map example </title>
+	<style type="text/css">
+		*{
+			margin:0;
+			padding:0;
+		}
+		body{
+			text-align:center;
+		}
+		#image_map{
+			display:inline-block;
+			margin:50px;
+			font-size:0;
+			position:relative;
+		}
+		.overlap{
+			    position: absolute;
+				background: #f00;
+				opacity: 0.25;
+		}
+	</style>
+	<script type="text/javascript">
+
+		window.addEventListener('load',function()
+		{
+			var wrapper = document.getElementById('image_map'),
+				imageMap = wrapper.getElementsByTagName('map')[0],
+				areas = imageMap.getElementsByTagName('area');
+
+			for( var i=0; i<areas.length; i++ )
+			{
+				var area = areas[i], 
+					coords = area.getAttribute('coords').split(','),
+					overlap = document.createElement('div'),
+					width = coords[2] - coords[0],
+					height = coords[3] - coords[1];
+				
+				overlap.setAttribute('class', 'overlap');
+	
+				overlap.style['left'] = coords[0] + "px";
+				overlap.style['top'] = coords[1] + "px";
+				overlap.style['width'] = width + "px";
+				overlap.style['height'] = height + "px";
+
+				wrapper.appendChild( overlap );
+			}
+
+			var overlaps = document.getElementsByClassName('overlap');
+
+			var isCollinding = collision( overlaps[0], overlaps[1] );
+			console.log('isCollinding', isCollinding);
+		},false);
+
+		function valueInRange( x, min, max ) 
+		{
+		  return x >= min && x <= max;
+		}
+
+		function collision( rectA, rectB )
+		{
+			var aX = rectA.offsetLeft,
+				aY = rectA.offsetTop,				
+				bX = rectB.offsetLeft,
+				bY = rectB.offsetTop,
+				aWidth = rectA.getBoundingClientRect().width,
+				aHeight = rectA.getBoundingClientRect().height,
+				bWidth = rectB.getBoundingClientRect().width,
+				bHeight = rectB.getBoundingClientRect().height;
+
+			var xOverlap = valueInRange( aX, bX, bX ) || valueInRange( bX, aX, aX + aWidth ),
+				yOverlap = valueInRange( aY, bY, bY ) || valueInRange( bY, aY, aY + aHeight );
+	
+			return xOverlap && yOverlap;
+		}
+	</script>
+</head>
+<body>
+	<div id="image_map">
+		<img src="https://html.com/wp-content/uploads/image_map_example.jpg" usemap="#image-map">
+		
+		<!-- collapse === false -->
+			<!-- <map name="image-map">
+				<area target="" alt="" title="" href="#" coords="561,232,992,323" shape="rect">
+				<area target="" alt="" title="" href="#" coords="410,134,925,225" shape="rect">
+			</map> -->
+		
+		<!-- collapse === true -->
+			<map name="image-map">
+				<area target="_blank" alt="" title="" href="#" coords="410,142,933,258" shape="rect">
+				<area target="_blank" alt="" title="" href="#" coords="553,227,985,316" shape="rect">
+			</map>
+	</div>	
+
+</body>
+</html>

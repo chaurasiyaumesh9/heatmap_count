@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title> Image Map example </title>
+	<style type="text/css">
+		*{
+			margin:0;
+			padding:0;
+		}
+		body{
+			text-align:center;
+		}
+		#image_map{
+			display:inline-block;
+			margin:50px;
+			font-size:0;
+			position:relative;
+			opacity:0;
+		}
+		.layer{
+			    position: absolute;
+				background: #0f0;
+				opacity: 0.25;
+		}
+		.point{
+			position: absolute;
+			opacity: 0.75;
+			background: #00f;
+			width:10px;
+			height:10px;
+			border-radius:50%;
+			transform:translate(-50%);
+			transform:-webkit-translate(-50%);
+		}
+		#heatmap-layer {
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			background:gray;
+			opacity:0;
+		}
+	</style>
+	<script src="js/Q210Cc1.js" type="text/javascript"></script>
+	<!-- <script src="js/Q210Cc1.js" type="text/javascript"></script> -->
+	<script type="text/javascript">
+		Object.defineProperty(Array.prototype, 'chunk', {
+		  value: function(chunkSize) {
+			var R = [];
+			for (var i = 0; i < this.length; i += chunkSize)
+			  R.push(this.slice(i, i + chunkSize));
+			return R;
+		  }
+		});
+		Object.defineProperty(Array.prototype, 'coords', {
+		  value: function() {
+			var R = [];
+			for (var i = 0; i < this.length; i += 2)
+			  R.push({
+				x: this[i],
+				y: this[i+1]
+			  });
+			return R;
+		  }
+		});
+		window.addEventListener('load',function()
+		{
+			var wrapper = document.getElementById('image_map'),
+				imageMap = wrapper.getElementsByTagName('map')[0],
+				areas = imageMap.getElementsByTagName('area'),
+				layersCount = {},
+				layers_data = [];
+			
+			for( var i=0; i<areas.length; i++ )
+			{
+				var area = areas[i], 
+					coords = area.getAttribute('coords').split(','),
+					title = area.getAttribute('title').trim(),
+					layerObj = {
+						title: area.getAttribute('title').trim(),
+						left: coords[0],
+						right: coords[2],
+						top: coords[1],
+						bottom: coords[3],
+						width: coords[2] - coords[0],
+						height: coords[3] - coords[1]
+					};
+
+				layers_data.push( layerObj );
+			}
+			for( var i=0; i<layers_data.length; i++ )
+			{
+				var layerObj = layers_data[i],
+					layerElement = document.createElement('div');
+				layerElement.setAttribute('class', 'layer');
+				layerElement.setAttribute('layername', layerObj.title);
+	
+				layerElement.style['left'] = layerObj.left + "px";
+				layerElement.style['top'] = layerObj.top + "px";
+				layerElement.style['width'] = layerObj.width + "px";
+				layerElement.style['height'] = layerObj.height + "px";
+
+				wrapper.appendChild( layerElement );
+
+			}
+
+			for( var i=0 ;i<Q210Cc1.length; i++)
+			{
+				var rectangles = Q210Cc1[i]['Q210Cc1'].split(" ").filter(function( point ){
+					return point.trim() !== "";
+				}).coords().chunk(2), id = Q210Cc1[i]['uuid'];
+				
+				for( var j=0; j<rectangles.length; j++)
+				{
+					var rectangle = rectangles[j],
+						rectangleObj = {
+							left: rectangle[0].x,
+							top: rectangle[0].y,
+							right: rectangle[1].x,
+							bottom: rectangle[1].y,
+							width: rectangle[1].x - rectangle[0].x,
+							height: rectangle[1].y - rectangle[0].y
+						};
+					
+					for( var k=0; k<layers_data.length; k++)
+					{
+						var layer = layers_data[k], 
+							layername = layer.title,
+							flag = checkForOverlap( rectangleObj, layer )
+						
+						if( !layersCount.hasOwnProperty( layername ) ){
+							layersCount[ layername ] = 0;
+						}
+
+						if( flag ){
+							layersCount[ layername ] += 1;							
+						}
+					}
+				}
+			}
+			console.log('layersCount :',layersCount);
+		},false);
+
+		function valueInRange( x, min, max ) 
+		{
+		  return x >= min && x <= max;
+		}
+		
+		function checkForOverlap(bounds1, bounds2) {
+
+			var firstIstLeftmost = (bounds1.left <= bounds2.left);
+			var leftest = firstIstLeftmost ? bounds1 : bounds2;
+			var rightest = firstIstLeftmost ? bounds2 : bounds1;
+
+			//change to >= if border overlap should count
+			if(leftest.right > rightest.left) {
+					//
+				var firstIsTopmost = (bounds1.top <= bounds2.top);
+				var topest = firstIsTopmost ? bounds1 : bounds2;
+				var bottomest = firstIsTopmost ? bounds2 : bounds1;
+
+				//change to >= if border overlap should count
+				return topest.bottom > bottomest.top;
+			}
+			else return false;
+
+		}
+
+		function isPointInBox( canvas, point )
+		{
+			//canvas => element
+			//point => object {}
+			
+			var _x = point.x, _y = point.y,
+				canvasWidth = canvas.getBoundingClientRect().width,
+				canvasHeight = canvas.getBoundingClientRect().height,
+				canvasLeft = canvas.offsetLeft,
+				canvasTop = canvas.offsetTop;
+			//debugger;
+			var xOverlap = valueInRange( _x, canvasLeft, canvasLeft + canvasWidth ),
+				yOverlap = valueInRange( _y, canvasTop, canvasTop + canvasHeight );
+	
+			return xOverlap && yOverlap;
+		}
+
+		function collision( rectA, rectB )
+		{
+			//checks collision with 2 rect
+			var aX = rectA.offsetLeft,
+				aY = rectA.offsetTop,				
+				bX = rectB.offsetLeft,
+				bY = rectB.offsetTop,
+				aWidth = rectA.getBoundingClientRect().width,
+				aHeight = rectA.getBoundingClientRect().height,
+				bWidth = rectB.getBoundingClientRect().width,
+				bHeight = rectB.getBoundingClientRect().height;
+
+			var xOverlap = valueInRange( aX, bX, bX ) || valueInRange( bX, aX, aX + aWidth ),
+				yOverlap = valueInRange( aY, bY, bY ) || valueInRange( bY, aY, aY + aHeight );
+	
+			return xOverlap && yOverlap;
+		}
+	</script>
+</head>
+<body>
+	<div id="image_map">
+		<img src="HCP_Revisions_Quant_C.jpg" width="1152" height="648" border="0" alt="" usemap="#image-map">
+
+		<map name="image-map">
+			<area target="_blank" alt="Main actor upper right" title="Main actor upper right" href="" coords="628,3,940,317" shape="rect">
+			<area target="_blank" alt="Main actor lower left" title="Main actor lower left" href="" coords="68,333,282,642" shape="rect">
+			<area target="_blank" alt="Additional people" title="Additional people" href="" coords="285,503,719,646" shape="rect">
+			<area target="_blank" alt="Control" title="Control" href="" coords="52,133,602,234" shape="rect">
+			<area target="_blank" alt="Trusted" title="Trusted" href="" coords="283,240,371,268" shape="rect">
+			<area target="_blank" alt="Symptom" title="Symptom" href="" coords="374,239,484,268" shape="rect">
+			<area target="_blank" alt="Reduction" title="Reduction" href="" coords="488,240,601,269" shape="rect">
+			<area target="_blank" alt="Continue" title="Continue" href="" coords="307,373,904,468" shape="rect">
+			<area target="_blank" alt="Significantly" title="Significantly" href="" coords="563,473,705,503" shape="rect">
+			<area target="_blank" alt="Less" title="Less" href="" coords="710,475,757,504" shape="rect">
+			<area target="_blank" alt="Weight gain" title="Weight gain" href="" coords="761,472,897,504" shape="rect">
+			<area target="_blank" alt="logo" title="logo" href="" coords="958,272,1127,311" shape="rect">
+			<area target="_blank" alt="Product X" title="Product X" href="" coords="960,313,1125,340" shape="rect">
+			<area target="_blank" alt="Olanzapine" title="Olanzapine" href="" coords="960,342,1033,361" shape="rect">
+			<area target="_blank" alt="samidorphan" title="samidorphan" href="" coords="1038,342,1123,358" shape="rect">
+		</map>
+		<canvas id="heatmap-layer" width="1152" height="648" ></canvas>
+	</div>	
+	
+</body>
+</html>
