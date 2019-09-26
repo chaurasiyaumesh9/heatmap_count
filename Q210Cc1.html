@@ -86,8 +86,8 @@
 				var area = areas[i], 
 					coords = area.getAttribute('coords').split(',').coords().map( function( obj ){
 						return {
-							x: Math.floor( obj.x ),
-							y: Math.floor( obj.y )
+							x: obj.x ,
+							y: obj.y
 						}
 					}), title = area.getAttribute('title').trim(),
 					layerObj = {
@@ -128,9 +128,8 @@
 				{
 					var rectangle = rectangles[j].map( function( obj ){
 						return {
-							x: Math.floor( obj.x ),
-							y: Math.floor( obj.y )
-						}
+							x: obj.x,
+							y: obj.y 						}
 					}),
 						rectangleObj = {
 							left: rectangle[0].x,

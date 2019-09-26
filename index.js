@@ -3,13 +3,13 @@ a,b,c
 1,2,3
 4,5,6
 */
-const csvFilePath='Q210Cc1-25092018.csv'
+const csvFilePath='Q230Cc1.csv'
 const csv=require('csvtojson')
 const fs = require('fs');
 
 csv().fromFile(csvFilePath).then((jsonObj)=>{
     //console.log(jsonObj);
-	fs.writeFile("js/Q210Cc1-25092018.json",  JSON.stringify( jsonObj ) , function(err) {
+	fs.writeFile("js/Q230Cc1.json",  JSON.stringify( jsonObj ) , function(err) {
 		if(err) {
 			return console.log(err);
 		}
