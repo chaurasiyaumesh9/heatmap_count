@@ -16,7 +16,6 @@
 			margin:50px;
 			font-size:0;
 			position:relative;
-			opacity:0;
 		}
 		.layer{
 			    position: absolute;
@@ -40,7 +39,6 @@
 			top:0;
 			right:0;
 			bottom:0;
-			opacity:0;
 		}
 		#heatmapContainer { width:100%; height:100%;}
 	</style>
@@ -142,8 +140,8 @@
 							width: rectangle[1].x - rectangle[0].x,
 							height: rectangle[1].y - rectangle[0].y
 						};
-					points.push( rectangle[0] );
-					points.push( rectangle[1] );
+					//points.push( rectangle[0] );
+					//points.push( rectangle[1] );
 					for( var k=0; k<layers_data.length; k++)
 					{
 						var layer = layers_data[k], 
@@ -151,44 +149,65 @@
 							flag = intersects( layer, rectangleObj )
 						
 						if( !layersCount.hasOwnProperty( layername ) ){
-							layersCount[ layername ] = 0;
+							layersCount[ layername ] = {
+								count: 0
+							} ;
 						}
 
 						if( flag ){
-							layersCount[ layername ] += 1;							
+							layersCount[ layername ]['count'] += 1;	
+							//layersCount[ layername ]['points'].push( rectangleObj );
 						}
 					}
 				}
 			}
-			console.log('layersCount :',layersCount);
-			//console.log('points : ',points);
-			generate();
 
-			function generate() 
+			var testData = [];
+			
+			
+			for( var prop in layersCount )
 			{
-			  var max = points.length; 
-			  var min = 0; 
-			  var t = [], width = 1152, height = 648;
+				var axis = getLayerCoords( prop );
+				var obj = {
+					x: axis['lat'],
+					y: axis['lng'],
+					value: layersCount[prop]['count'],
+					radius: axis['r']
+				}
+				//layersCount[prop]['lat'] = axis['lat'];
+				//layersCount[prop]['lng'] = axis['lng'];
+				testData.push( obj );
+			}
+			
+			console.log('layersCount :',layersCount);
+			console.log('layers_data :',layers_data);
+			//console.log('testData :',testData);
 
+			//heatmap.setDataMax(100);
 
-			  for (var i = 0; i < points.length; i++) {
-				var x = points[i].x >> 0; 
-				var y = points[i].y >> 0; 
-				var c = ((Math.random()* max-min) >> 0) + min;
-				// btw, we can set a radius on a point basis
-				var r = 20 ;;//(Math.random()* 80) >> 0;
-				// add to dataset
-				t.push({ x: x, y:y, value: 100, radius: r });
-			  }
-			  var init = +new Date;
-			  // set the generated dataset
-			  heatmap.setData({
+			heatmap.setData({
 				min: 0,
-				max: 100,
-				data: t
-			  });
-			  console.log('took ', (+new Date) - init, 'ms');
-			};
+				max: 50,
+				data: testData
+			});			
+			
+			function getLayerCoords( layername )
+			{
+				for( var i=0; i<layers_data.length; i++)
+				{
+					if( layers_data[i]['title'] === layername )
+					{
+						return { 
+							lat: layers_data[i]['left'] + layers_data[i]['width']/2,
+							lng: layers_data[i]['top'] + layers_data[i]['height']/2,
+							r: 75
+						}	
+					}
+					
+				}
+				return null
+			}
+			
 		},false);
 		
 		function intersects(a, b) {
