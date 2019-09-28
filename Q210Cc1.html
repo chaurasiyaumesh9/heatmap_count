@@ -32,6 +32,11 @@
 			transform:translate(-50%);
 			transform:-webkit-translate(-50%);
 		}
+		.box{
+			position: absolute;
+			opacity: 0.75;
+			background: #00f;
+		}
 		#heatmapContainerWrapper { 
 			position:absolute; 
 			background:rgba(0,0,0,.1); 
@@ -117,13 +122,15 @@
 				wrapper.appendChild( layerElement );
 
 			}
-
+			var actual_data = {};
 			for( var i=0 ;i<Q210Cc1.length; i++)
 			{
 				var rectangles = Q210Cc1[i]['Q210Cc1'].split(" ").filter(function( point ){
 					return point.trim() !== "";
-				}).coords().chunk(2), id = Q210Cc1[i]['uuid'];
+				}).coords().chunk(2), id = Q210Cc1[i]['uuid']; 
 				
+				//console.log('rectangles : ',id);
+				actual_data[id] = [];
 				for( var j=0; j<rectangles.length; j++)
 				{
 					var rectangle = rectangles[j].map( function( obj ){
@@ -145,17 +152,22 @@
 					{
 						var layer = layers_data[k], 
 							layername = layer.title,
-							flag = intersects( layer, rectangleObj )
-						
+							flag = rectOverlap( layer, rectangleObj )
+						//console.log('flag : ',flag,',',layername);
 						if( !layersCount.hasOwnProperty( layername ) ){
 							layersCount[ layername ] = {
-								count: 0
+								count: 0,
+								points: []
 							} ;
 						}
-
+						if( !actual_data.hasOwnProperty( id ) ){
+							//actual_data[ id ] =  [];
+						}
+						layersCount[ layername ]['points'].push( rectangleObj );
 						if( flag ){
 							layersCount[ layername ]['count'] += 1;	
 							//layersCount[ layername ]['points'].push( rectangleObj );
+							actual_data[ id ].push( layername );
 						}
 					}
 				}
@@ -163,6 +175,12 @@
 
 			var testData = [];
 			
+			function unique( arr )
+			{
+				return arr.filter(function(item, pos) {
+					return arr.indexOf(item) == pos;
+				});
+			}
 			
 			for( var prop in layersCount )
 			{
@@ -177,11 +195,121 @@
 				//layersCount[prop]['lng'] = axis['lng'];
 				testData.push( obj );
 			}
-			
-			console.log('layersCount :',layersCount);
-			console.log('layers_data :',layers_data);
-			//console.log('testData :',testData);
+			for( var prop in layersCount )
+			{
+				var points = layersCount[prop]['points'];
+				for( k=0; k<points.length; k++ )
+				{
+					var point = points[k];
+					var box = document.createElement('div');
+					box.setAttribute('class', 'box');
+					
+		
+					box.style['left'] = point.left + "px";
+					box.style['top'] = point.top + "px";
+					box.style['width'] = point.width + "px";
+					box.style['height'] = point.height + "px";
 
+					wrapper.appendChild( box );
+				}
+			}
+			//console.log('layersCount :',layersCount);
+
+			for( var prop in actual_data )
+			{
+				actual_data[prop] = unique(actual_data[prop]);
+			}
+			//console.log('actual_data :',actual_data);
+			var final_count = {};
+			for( var prop in actual_data )
+			{
+				var qualifiedRegions = actual_data[prop];
+				for( var k=0; k<qualifiedRegions.length; k++)
+				{
+					if( !final_count.hasOwnProperty( qualifiedRegions[k] ) ){
+						final_count[ qualifiedRegions[k] ] = 0;
+					}
+					final_count[ qualifiedRegions[k] ] += 1;
+				}
+			}
+			
+			console.log('actual_data :',actual_data);
+			console.log('final_count :',final_count);
+			var data_4567 = [], data_567 = [], data_67 = [], data_891011 = [], data_91011 = [], data_910 = [];
+			//console.log('testData :',testData);
+			function get_4567()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Control") != -1 && qualifiedRegions.indexOf("Trusted") != -1 && qualifiedRegions.indexOf("Symptom") != -1 && qualifiedRegions.indexOf("Reduction") != -1 )
+					{
+						data_4567.push( prop );
+					}
+				}
+			}
+			function get_567()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Trusted") != -1 && qualifiedRegions.indexOf("Symptom") != -1 && qualifiedRegions.indexOf("Reduction") != -1 )
+					{
+						data_567.push( prop );
+					}
+				}
+			}
+			function get_67()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Symptom") != -1 && qualifiedRegions.indexOf("Reduction") != -1 )
+					{
+						data_67.push( prop );
+					}
+				}
+			}
+			function get_891011()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Continue") != -1 && qualifiedRegions.indexOf("Significantly") != -1 && qualifiedRegions.indexOf("Less") != -1 && qualifiedRegions.indexOf("Weight gain") != -1 )
+					{
+						data_891011.push( prop );
+					}
+				}
+			}
+			function get_91011()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Significantly") != -1 && qualifiedRegions.indexOf("Less") != -1 && qualifiedRegions.indexOf("Weight gain") != -1 )
+					{
+						data_91011.push( prop );
+					}
+				}
+			}
+			function get_910()
+			{
+				for( var prop in actual_data )
+				{
+					var qualifiedRegions = actual_data[prop];
+					if ( qualifiedRegions.indexOf("Significantly") != -1 && qualifiedRegions.indexOf("Less") != -1 )
+					{
+						data_910.push( prop );
+					}
+				}
+			}
+			get_4567();
+			get_567();
+			get_67();
+			get_891011();
+			get_91011();
+			get_910();
+			console.log('data_4567 :',data_4567,',data_567 : ',data_567,',data_67 :',data_67,',data_891011:',data_891011,',data_91011 :',data_91011,',data_910:',data_910);
 			//heatmap.setDataMax(100);
 
 			heatmap.setData({
@@ -210,10 +338,28 @@
 		},false);
 		
 		function intersects(a, b) {
-		  return (a.left <= b.right &&
-				  b.left <= a.right &&
-				  a.top <= b.bottom &&
-				  b.top <= a.bottom)
+			//console.log('a :',a,',b :',b);
+		  return ( Math.round( a.left ) <= Math.round( b.right ) && 
+				  Math.round( b.left ) <= Math.round( a.right ) && 
+				  Math.round( a.top ) <= Math.round( b.bottom ) && 
+				  Math.round( b.top ) <= Math.round( a.bottom ) ) 
+		}
+		
+		function valueInRange(value, min, max)
+		{ 
+			
+			return (Math.round(value) >= Math.round(min)) && (Math.round(value) <= Math.round(max)); 
+		}
+		function rectOverlap(rect1, rect2)
+		{
+			var x_overlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
+			var y_overlap = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+			
+			var R1Area = rect1.width * rect1.height;
+			var R2Area = rect2.width * rect2.height;
+			var PercenageArea = (R2Area/R1Area) * 100;
+			//console.log('PercenageArea : ',PercenageArea);
+			return x_overlap && y_overlap && PercenageArea >= 50;
 		}
 		
 	</script>
@@ -225,16 +371,16 @@
 		<map name="image-map">
 			<area target="_blank" alt="Main actor upper right" title="Main actor upper right" href="" coords="628,3,940,317" shape="rect">
 			<area target="_blank" alt="Main actor lower left" title="Main actor lower left" href="" coords="68,333,282,642" shape="rect">
-			<area target="_blank" alt="Additional people" title="Additional people" href="" coords="285,503,719,646" shape="rect">
+			<area target="_blank" alt="Additional people" title="Additional people" href="" coords="290,503,709,642" shape="rect">
 			<area target="_blank" alt="Control" title="Control" href="" coords="52,133,602,234" shape="rect">
 			<area target="_blank" alt="Trusted" title="Trusted" href="" coords="283,240,371,268" shape="rect">
 			<area target="_blank" alt="Symptom" title="Symptom" href="" coords="374,239,484,268" shape="rect">
 			<area target="_blank" alt="Reduction" title="Reduction" href="" coords="488,240,601,269" shape="rect">
 			<area target="_blank" alt="Continue" title="Continue" href="" coords="307,373,904,468" shape="rect">
-			<area target="_blank" alt="Significantly" title="Significantly" href="" coords="563,473,705,503" shape="rect">
+			<area target="_blank" alt="Significantly" title="Significantly" href="" coords="563,471,704,499" shape="rect">
 			<area target="_blank" alt="Less" title="Less" href="" coords="710,475,757,504" shape="rect">
 			<area target="_blank" alt="Weight gain" title="Weight gain" href="" coords="761,472,897,504" shape="rect">
-			<area target="_blank" alt="logo" title="logo" href="" coords="958,272,1127,311" shape="rect">
+			<area target="_blank" alt="logo" title="logo" href="" coords="980,271,1119,308" shape="rect">
 			<area target="_blank" alt="Product X" title="Product X" href="" coords="960,313,1125,340" shape="rect">
 			<area target="_blank" alt="Olanzapine" title="Olanzapine" href="" coords="960,342,1033,361" shape="rect">
 			<area target="_blank" alt="samidorphan" title="samidorphan" href="" coords="1038,342,1123,358" shape="rect">
